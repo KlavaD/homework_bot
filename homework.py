@@ -1,13 +1,13 @@
 import logging
 import os
 import sys
+import time
 
 import requests
 import telegram
-import time
-import exceptions
-
 from dotenv import load_dotenv
+
+import exceptions
 
 load_dotenv()
 PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
@@ -35,7 +35,7 @@ logger.addHandler(stream_handler)
 
 
 def send_message(bot, message):
-    """ отправляет сообщение в Telegram чат """
+    """отправляет сообщение в Telegram чат."""
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logging.info('Отправлено сообщение в телеграм')
@@ -44,7 +44,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """ делает запрос """
+    """делает запрос."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
@@ -58,7 +58,7 @@ def get_api_answer(current_timestamp):
 
 
 def check_response(response):
-    """ проверяет ответ API на корректность """
+    """проверяет ответ API на корректность."""
     if isinstance(response['homeworks'], list):
         return response['homeworks']
     else:
@@ -66,8 +66,8 @@ def check_response(response):
 
 
 def parse_status(homework):
-    """ извлекает из информации о конкретной
-    домашней работе статус этой работы. """
+    """извлекает из информации о конкретной
+    домашней работе статус этой работы."""
 
     homework_name = homework['homework_name']
     try:
@@ -79,7 +79,7 @@ def parse_status(homework):
 
 
 def check_tokens():
-    """ Проверяет доступность переменных окружения """
+    """Проверяет доступность переменных окружения."""
     tokens = (PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)
     for token in tokens:
         if token is None or len(str(token)) == 0:
@@ -118,8 +118,6 @@ def main():
             logging.error(f'Сбой в работе программы: {error}')
         else:
             time.sleep(RETRY_TIME)
-
-
 
 
 if __name__ == '__main__':
