@@ -88,7 +88,7 @@ def check_tokens():
 
     return True
 
-# flake8: noqa: c901
+
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
@@ -110,10 +110,6 @@ def main():
         except exceptions.UrlNotAvailable as error:
             logging.error(error)
         except exceptions.ApiAnswerError as error:
-            logging.error(error)
-        except TypeError as error:
-            logging.error(error)
-        except KeyError as error:
             logging.error(error)
         except Exception as error:
             logging.error(f'Сбой в работе программы: {error}')
