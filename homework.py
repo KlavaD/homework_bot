@@ -88,7 +88,7 @@ def check_tokens():
 
     return True
 
-
+# flake8: noqa: c901
 def main():
     """Основная логика работы бота."""
     if not check_tokens():
