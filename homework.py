@@ -18,7 +18,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 5
+RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -147,19 +147,12 @@ def main():
                 verdict = parse_status(homeworks[0])
                 current_report['name'] = homeworks[0]['homework_name']
                 current_report['message'] = verdict
-
                 if current_report != prev_report:
                     if send_message(bot, verdict):
                         prev_report = current_report.copy()
                 current_timestamp = response.get('current_date')
             else:
                 logger.debug('Нет новых статусов')
-        except exceptions.ApiAnswerIsEmpty as error:
-            current_report['error'] = str(error)
-            if current_report != prev_report:
-                if send_message(bot, str(error)):
-                    prev_report = current_report.copy()
-            logger.error(error)
         except Exception as error:
             current_report['error'] = str(error)
             if current_report != prev_report:
