@@ -1,16 +1,6 @@
-
-class MassageDontSent(Exception):
-    pass
-
-
 class UrlNotAvailable(Exception):
     pass
 
 
-class ApiAnswerError(Exception):
+class ApiAnswerIsEmpty(Exception):
     pass
-
-
-class TokenError(Exception):
-    pass
-
