@@ -102,8 +102,10 @@ def parse_status(homework):
     homework_status = homework.get('status')
     if not HOMEWORK_VERDICTS[homework_status]:
         raise ValueError('Для данного статуса нет вердикта')
-    return 'Изменился статус проверки работы "{homework_name}".{verdict}'.format(
-        homework_name=homework_name, verdict=HOMEWORK_VERDICTS[homework_status])
+    return ('Изменился статус проверки работы' 
+            '"{homework_name}".{verdict}'.format(
+                        homework_name=homework_name,
+                        verdict=HOMEWORK_VERDICTS[homework_status]))
 
 
 def check_tokens():
@@ -152,14 +154,12 @@ def main():
                 current_timestamp = response.get('current_date')
             else:
                 logger.debug('Нет новых статусов')
-
         except exceptions.ApiAnswerIsEmpty as error:
             current_report['error'] = str(error)
             if current_report != prev_report:
                 if send_message(bot, str(error)):
                     prev_report = current_report.copy()
             logger.error(error)
-
         except Exception as error:
             current_report['error'] = str(error)
             if current_report != prev_report:
