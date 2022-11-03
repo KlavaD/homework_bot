@@ -73,7 +73,7 @@ def get_api_answer(current_timestamp):
             raise exceptions.UrlNotAvailable(
                 f'URL не доступен, {response.status_code}, {response.reason}')
         return response.json()
-    except Exception as error:
+    except Exception:
         raise ConnectionError(
             'При запросе произошла ошибка {url}, {headers},{params}'.format(
                 **api_params_dict))
@@ -102,10 +102,11 @@ def parse_status(homework):
     homework_status = homework.get('status')
     if not HOMEWORK_VERDICTS[homework_status]:
         raise ValueError('Для данного статуса нет вердикта')
-    return ('Изменился статус проверки работы' 
+    return ('Изменился статус проверки работы'
             '"{homework_name}".{verdict}'.format(
                         homework_name=homework_name,
-                        verdict=HOMEWORK_VERDICTS[homework_status]))
+                        verdict=HOMEWORK_VERDICTS[homework_status])
+    )
 
 
 def check_tokens():
