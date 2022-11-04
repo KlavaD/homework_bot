@@ -18,7 +18,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 5
+RETRY_TIME = 600
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -149,9 +149,8 @@ def main():
             homeworks = check_response(response)
             if homeworks:
                 homework = homeworks[0]
-                verdict = parse_status(homework)
                 current_report['name'] = homework['homework_name']
-                current_report['message'] = verdict
+                current_report['message'] = parse_status(homework)
             else:
                 current_report['message'] = 'Нет новых статусов'
             if current_report != prev_report:
