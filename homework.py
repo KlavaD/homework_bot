@@ -18,7 +18,7 @@ PRACTICUM_TOKEN = os.getenv('PRACTICUM_TOKEN')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
 
-RETRY_TIME = 600
+RETRY_TIME = 5
 ENDPOINT = 'https://practicum.yandex.ru/api/user_api/homework_statuses/'
 HEADERS = {'Authorization': f'OAuth {PRACTICUM_TOKEN}'}
 
@@ -45,8 +45,9 @@ logger.addHandler(file_handler)
 def send_message(bot, message):
     """отправляет сообщение в Telegram чат."""
     try:
-        logger.info('мы начали отправку сообщения в Telegram')
+        logger.info(f'мы начали отправку сообщения {message} в Telegram')
         bot.send_message(TELEGRAM_CHAT_ID, message)
+        logger.info(f'отправлено сообщение {message}')
         return True
     except telegram.error.TelegramError(
             'При отправке сообщения произошла ошибка') as error:
@@ -73,9 +74,11 @@ def get_api_answer(current_timestamp):
             raise exceptions.UrlNotAvailable(
                 f'URL не доступен, {response.status_code}, {response.reason}')
         return response.json()
-    except Exception:
+    except Exception as error:
         raise ConnectionError(
-            'При запросе произошла ошибка {url}, {headers},{params}'.format(
+            'При запросе произошла ошибка {error},'
+            ' {url}, {headers},{params}'.format(
+                error=error,
                 **api_params_dict))
 
 
@@ -84,11 +87,11 @@ def check_response(response):
     logger.info('Начали проверку ответа от API ')
     if not isinstance(response, dict):
         raise TypeError('тип ответа от API не словарь')
-    if len(response['homeworks']) == 0:
+    if 'homeworks' not in response:
         raise exceptions.ApiAnswerIsEmpty('Нет домашней работы для проверки')
     homeworks = response.get('homeworks')
     if not isinstance(homeworks, list):
-        raise TypeError('homeworks не список')
+        raise ValueError('homeworks не список')
     return homeworks
 
 
@@ -97,10 +100,10 @@ def parse_status(homework):
     домашней работе статус этой работы.
     """
     homework_name = homework.get('homework_name')
-    if not homework_name:
+    if 'homework_name' not in homework:
         raise KeyError('Нет имени домашки')
     homework_status = homework.get('status')
-    if not HOMEWORK_VERDICTS[homework_status]:
+    if homework_status not in HOMEWORK_VERDICTS:
         raise ValueError('Для данного статуса нет вердикта')
     return (
         'Изменился статус проверки работы "{homework_name}".{verdict}'.format(
@@ -118,7 +121,7 @@ def check_tokens():
     )
     flag = True
     for token_name, token in tokens:
-        if token is None or len(str(token)) == 0:
+        if not token:
             logger.critical(f'Нет токена {token_name}')
             flag = False
 
@@ -133,34 +136,40 @@ def main():
     current_timestamp = 0
     current_report = {
         'name': '',
-        'message': '',
-        'error': ''
+        'message': ''
     }
     prev_report = {
         'name': '',
-        'message': '',
-        'error': ''
+        'message': ''
     }
     while True:
         try:
             response = get_api_answer(current_timestamp)
+            print(response)
             homeworks = check_response(response)
-            if len(homeworks) > 0:
-                verdict = parse_status(homeworks[0])
-                current_report['name'] = homeworks[0]['homework_name']
+            if homeworks:
+                homework = homeworks[0]
+                verdict = parse_status(homework)
+                current_report['name'] = homework['homework_name']
                 current_report['message'] = verdict
-                if current_report != prev_report:
-                    if send_message(bot, verdict):
-                        prev_report = current_report.copy()
-                current_timestamp = response.get('current_date')
+            else:
+                current_report['message'] = 'Нет новых статусов'
+            if current_report != prev_report:
+                if send_message(bot, current_report['message']):
+                    prev_report = current_report.copy()
+                    current_timestamp = response.get(
+                        'current_date', current_timestamp)
             else:
                 logger.debug('Нет новых статусов')
+        except exceptions.ApiAnswerIsEmpty as error:
+            logger.exception(error)
         except Exception as error:
-            current_report['error'] = str(error)
+            message = f'Сбой в работе программы: {error}'
+            current_report['message'] = message
+            logger.exception(message)
             if current_report != prev_report:
-                if send_message(bot, str(error)):
-                    prev_report = current_report.copy()
-            logger.error(f'Сбой в работе программы: {error}')
+                send_message(bot, str(error))
+                prev_report = current_report.copy()
         finally:
             time.sleep(RETRY_TIME)
 
